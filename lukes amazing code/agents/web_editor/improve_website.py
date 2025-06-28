@@ -2,14 +2,15 @@ import requests
 import json
 import os
 from dotenv import load_dotenv
+import google.generativeai as genai
 
 load_dotenv()
 
 # --- Configuration ---
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
-if not DEEPSEEK_API_KEY:
-    raise ValueError("DEEPSEEK_API_KEY not found in .env file or environment variables.")
-DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY not found in .env file or environment variables.")
+genai.configure(api_key=GEMINI_API_KEY)
 WEBSITE_DATA_URL = "https://sunbird-adapted-dassie.ngrok-free.app/website-data"
 HTML_FILE_PATH = os.path.join(os.path.dirname(__file__), "peach_status.html")
 
@@ -28,8 +29,8 @@ def read_html_file(path):
         return f.read()
 
 def get_improved_html(feedback, html_content):
-    """Calls DeepSeek API to get an improved version of the HTML."""
-    print("Calling DeepSeek API for website improvements...")
+    """Calls Gemini API to get an improved version of the HTML."""
+    print("Calling Gemini API for website improvements...")
     prompt = f"""
     Based on the following user feedback, please rewrite the provided HTML file to incorporate the requested changes.
 
@@ -44,20 +45,9 @@ def get_improved_html(feedback, html_content):
     Please return ONLY the complete, raw, updated HTML code. Do not include any commentary, explanations, or markdown code fences like ```html.
     """
     
-    headers = {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "model": "deepseek-chat",
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.5,
-    }
-    
-    response = requests.post(DEEPSEEK_URL, headers=headers, json=data, timeout=60)
-    response.raise_for_status()
-    result = response.json()
-    return result["choices"][0]["message"]["content"].strip()
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    response = model.generate_content(prompt)
+    return response.text.strip()
 
 def save_html_overwrite(path, content):
     """Saves the improved HTML content, overwriting the original file."""
