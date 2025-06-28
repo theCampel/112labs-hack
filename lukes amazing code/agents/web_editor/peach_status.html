@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Princess Peach Status</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      font-family: 'Press Start 2P', cursive;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .card {
+      background: #0f3460;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      padding: 30px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      border: 3px solid #e94560;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .peach-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 4px solid #e94560;
+      box-shadow: 0 8px 16px rgba(233,69,96,0.3);
+    }
+    
+    .castle-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      border: 3px solid #e94560;
+    }
+    
+    .title {
+      color: #e94560;
+      font-size: 1.2em;
+      margin-bottom: 5px;
+    }
+    
+    .status-badge {
+      background: #533483;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.7em;
+      display: inline-block;
+      margin-bottom: 25px;
+    }
+    
+    .status-grid {
+      display: grid;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .status-item {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 15px;
+      border-left: 4px solid #e94560;
+      text-align: left;
+    }
+    
+    .status-label {
+      color: #f1f1f1;
+      font-size: 0.6em;
+      margin-bottom: 5px;
+    }
+    
+    .status-value {
+      color: #ffffff;
+      font-size: 0.8em;
+      font-weight: bold;
+    }
+    
+    .danger {
+      border-left-color: #e94560;
+    }
+    
+    .safe {
+      border-left-color: #00b894;
+    }
+    
+    .warning {
+      border-left-color: #fdcb6e;
+    }
+    
+    .footer {
+      color: #f1f1f1;
+      font-size: 0.5em;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <img class="peach-avatar" src="../../images/princess%20peach.png" alt="Princess Peach">
+      <div>
+        <h1 class="title">Princess Peach</h1>
+        <div class="status-badge">🛡️ SAFE & SOUND</div>
+      </div>
+      <img class="castle-icon" src="../../images/princess%20castle.jpeg" alt="Castle">
+    </div>
+    
+    <div class="status-grid">
+      <div class="status-item safe">
+        <div class="status-label">📍 LOCATION</div>
+        <div class="status-value">Mushroom Castle</div>
+      </div>
+      
+      <div class="status-item safe">
+        <div class="status-label">⏰ LAST CAPTURED</div>
+        <div class="status-value">2 days ago</div>
+      </div>
+      
+      <div class="status-item warning">
+        <div class="status-label">👑 TOTAL CAPTURES</div>
+        <div class="status-value">7 times</div>
+      </div>
+      
+      <div class="status-item safe">
+        <div class="status-label">🦸 LAST HERO</div>
+        <div class="status-value">Mario</div>
+      </div>
+      
+      <div class="status-item danger">
+        <div class="status-label">👹 LAST THREAT</div>
+        <div class="status-value">Bowser</div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      Mushroom Kingdom Status Board • Updated in real-time
+    </div>
+  </div>
+</body>
+</html>

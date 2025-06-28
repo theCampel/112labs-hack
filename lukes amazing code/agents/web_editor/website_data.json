@@ -1,0 +1,11 @@
+{
+  "content": {
+    "feedback": "i dont like the colour scheme i want it changed",
+    "footer": "Mushroom Kingdom Status Board \u2022 Updated via POST request"
+  },
+  "status": {
+    "color": "#9b59b6",
+    "current_status": "CUSTOM STATUS",
+    "emoji": "\ud83c\udfa8"
+  }
+}
