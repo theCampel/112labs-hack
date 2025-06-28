@@ -1,7 +1,7 @@
 "use client"
 
 import { useConversation } from '@elevenlabs/react'
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 
 // This is a placeholder for the actual ElevenLabs integration
 // Replace this with the correct ElevenLabs React SDK import once available
@@ -9,9 +9,7 @@ import { useCallback, useState } from 'react'
 interface ConversationMessage {
   message?: string
   speaker?: string
-  source?: {
-    voice_id?: string
-  }
+  source?: any
 }
 
 interface ElevenLabsConversationProps {
@@ -20,6 +18,8 @@ interface ElevenLabsConversationProps {
   onDisconnect?: () => void
   onMessage?: (message: ConversationMessage) => void
   onError?: (error: any) => void
+  hideUI?: boolean
+  onMethodsReady?: (methods: { startConversation: () => Promise<void>, stopConversation: () => Promise<void> }) => void
 }
 
 export function ElevenLabsConversation({
@@ -28,6 +28,8 @@ export function ElevenLabsConversation({
   onDisconnect,
   onMessage,
   onError,
+  hideUI = false,
+  onMethodsReady,
 }: ElevenLabsConversationProps) {
   const [isStarting, setIsStarting] = useState(false)
   
@@ -93,6 +95,18 @@ export function ElevenLabsConversation({
   const stopConversation = useCallback(async () => {
     await conversation.endSession()
   }, [conversation])
+
+  // Expose methods to parent component
+  useEffect(() => {
+    onMethodsReady?.({
+      startConversation,
+      stopConversation,
+    })
+  }, [startConversation, stopConversation, onMethodsReady])
+
+  if (hideUI) {
+    return null
+  }
 
   return (
     <div className="space-y-4">
