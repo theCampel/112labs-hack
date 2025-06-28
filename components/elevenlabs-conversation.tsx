@@ -19,6 +19,7 @@ interface ElevenLabsConversationProps {
   onMessage?: (message: ConversationMessage) => void
   onError?: (error: any) => void
   hideUI?: boolean
+  isMuted?: boolean
   onMethodsReady?: (methods: { startConversation: () => Promise<void>, stopConversation: () => Promise<void> }) => void
 }
 
@@ -29,11 +30,13 @@ export function ElevenLabsConversation({
   onMessage,
   onError,
   hideUI = false,
+  isMuted = false,
   onMethodsReady,
 }: ElevenLabsConversationProps) {
   const [isStarting, setIsStarting] = useState(false)
   
   const conversation = useConversation({
+    micMuted: isMuted,
     onConnect: () => {
       console.log('🟢 Mario Team Connected!')
       onConnect?.()

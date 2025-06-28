@@ -104,7 +104,7 @@ export default function MarioBoardroom() {
     setSpeakerTimeouts(prev => new Map([...prev, [speakerId, timeout]]))
   }
 
-  // Voice activity detection for Mario
+  // Voice activity detection for Mario (visual indicators only)
   const detectMarioVoiceActivity = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -123,7 +123,8 @@ export default function MarioBoardroom() {
         
         // Calculate average volume
         const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength
-        const isSpeaking = average > 20 // Adjust threshold as needed
+        // When muted, still show visual indicators but ElevenLabs won't receive audio
+        const isSpeaking = isMuted ? false : average > 20 // Don't show speaking when muted
         
         if (isSpeaking !== marioIsSpeaking) {
           setMarioIsSpeaking(isSpeaking)
@@ -396,6 +397,7 @@ export default function MarioBoardroom() {
           <ElevenLabsConversation
             agentId={process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || "your-agent-id"}
             hideUI={true}
+            isMuted={isMuted}
             onMethodsReady={handleMethodsReady}
             onConnect={() => {
               setIsConnected(true)
