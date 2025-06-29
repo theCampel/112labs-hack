@@ -1,26 +1,24 @@
 import requests
 import json
 import os
+import sys
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
+
+# Add the utils directory to the path so we can import prompt_loader
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "utils"))
+from prompt_loader import load_and_format_prompt
 
 load_dotenv()
 
 # --- Configuration ---
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY not found in .env file or environment variables.")
-genai.configure(api_key=GEMINI_API_KEY)
-WEBSITE_DATA_URL = "https://sunbird-adapted-dassie.ngrok-free.app/website-data"
+# Initialize client with environment variables
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+NGROK_BASE_URL = os.getenv("NGROK_BASE_URL", "https://advanced-possibly-lab.ngrok-free.app")
+WEBSITE_DATA_URL = f"{NGROK_BASE_URL}/website-data"
 HTML_FILE_PATH = os.path.join(os.path.dirname(__file__), "peach_status.html")
 
 # --- Helper Functions ---
-def fetch_website_data(url):
-    """Fetches the website data JSON from the given URL."""
-    print(f"Fetching feedback from {url}...")
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.json()
 
 def read_html_file(path):
     """Reads the content of the HTML file."""
@@ -28,25 +26,15 @@ def read_html_file(path):
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
-def get_improved_html(feedback, html_content):
+def improve_website_html(feedback, html_content):
     """Calls Gemini API to get an improved version of the HTML."""
-    print("Calling Gemini API for website improvements...")
-    prompt = f"""
-    Based on the following user feedback, please rewrite the provided HTML file to incorporate the requested changes.
-
-    **User Feedback:**
-    "{feedback}"
-
-    **Original HTML:**
-    ```html
-    {html_content}
-    ```
-
-    Please return ONLY the complete, raw, updated HTML code. Do not include any commentary, explanations, or markdown code fences like ```html.
-    """
     
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    response = model.generate_content(prompt)
+    prompt = load_and_format_prompt("improve_website_html", feedback=feedback, html_content=html_content)
+    
+    response = client.models.generate_content(
+        model="gemini-2.5-flash", 
+        contents=prompt
+    )
     return response.text.strip()
 
 def save_html_overwrite(path, content):
@@ -60,16 +48,13 @@ def save_html_overwrite(path, content):
 if __name__ == "__main__":
     try:
         # 1. Fetch data and read HTML
-        website_data = fetch_website_data(WEBSITE_DATA_URL)
         html_content = read_html_file(HTML_FILE_PATH)
         
         # 2. Extract feedback
-        feedback = website_data.get("content", {}).get("feedback")
-        if not feedback:
-            raise ValueError("No feedback found in the website data.")
+        feedback = "Change the color of the background to red."
         
         # 3. Get improved HTML from AI
-        improved_html = get_improved_html(feedback, html_content)
+        improved_html = improve_website_html(feedback, html_content)
         
         # 4. Overwrite the original HTML file
         save_html_overwrite(HTML_FILE_PATH, improved_html)

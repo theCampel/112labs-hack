@@ -1,7 +1,12 @@
 import requests
+import os
+from dotenv import load_dotenv
 
-DESCRIPTION_URL = "https://sunbird-adapted-dassie.ngrok-free.app/description"
-SET_DESCRIPTION_URL = "https://sunbird-adapted-dassie.ngrok-free.app/set_description"
+load_dotenv()
+
+NGROK_BASE_URL = os.getenv("NGROK_BASE_URL", "https://advanced-possibly-lab.ngrok-free.app")
+DESCRIPTION_URL = f"{NGROK_BASE_URL}/description"
+SET_DESCRIPTION_URL = f"{NGROK_BASE_URL}/set-description"
 
 def get_description():
     response = requests.get(DESCRIPTION_URL)
