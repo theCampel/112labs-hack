@@ -59,8 +59,6 @@ export default function MarioBoardroom() {
   const [isConnected, setIsConnected] = useState(false)
   const [transcript, setTranscript] = useState<string[]>([])
   const [isMuted, setIsMuted] = useState(true)
-  const [coins, setCoins] = useState(1670)
-  const [lives, setLives] = useState(6)
   const [marioIsSpeaking, setMarioIsSpeaking] = useState(false)
   const [activeSpeakers, setActiveSpeakers] = useState<Set<string>>(new Set())
   const [speakerTimeouts, setSpeakerTimeouts] = useState<Map<string, NodeJS.Timeout>>(new Map())
@@ -206,9 +204,6 @@ export default function MarioBoardroom() {
       })
       const result = await response.json()
       console.log("Character action result:", result)
-
-      // Add coins when actions are performed
-      setCoins((prev) => prev + 100)
     } catch (error) {
       console.error("Character action failed:", error)
     }
@@ -217,7 +212,6 @@ export default function MarioBoardroom() {
   // Memoized callbacks for ElevenLabsConversation
   const handleConnect = useCallback(() => {
     setIsConnected(true)
-    setCoins((prev) => prev + 200)
   }, [])
 
   const handleDisconnect = useCallback(() => {
@@ -246,7 +240,6 @@ export default function MarioBoardroom() {
     if (message.message && speaker) {
       const characterName = characters.find(c => c.id === speaker)?.name || speaker
       setTranscript((prev) => [...prev, `${characterName}: ${message.message}`])
-      setCoins((prev) => prev + 50)
     }
   }, [addActiveSpeaker, removeActiveSpeakerWithDelay])
 
@@ -275,7 +268,7 @@ export default function MarioBoardroom() {
             {/* Left Side - Mario Logo & Info */}
             <div className="flex items-center space-x-4">
               <div className="mario-logo">
-                <span className="mario-m">M</span>
+                <img src="/assets/superlogo.jpg" alt="Super Mario Inc Logo" className="w-12 h-12 rounded-lg" />
               </div>
               <div>
                 <h1 className="mario-title">SUPER MARIO INC.</h1>
@@ -283,20 +276,8 @@ export default function MarioBoardroom() {
               </div>
             </div>
 
-            {/* Right Side - Game Stats */}
+            {/* Right Side - Connection Status */}
             <div className="flex items-center space-x-6">
-              <div className="mario-stat">
-                <span className="mario-stat-label">MARIO</span>
-                <div className="mario-stat-value">×{lives.toString().padStart(2, "0")}</div>
-              </div>
-              <div className="mario-stat">
-                <span className="mario-coin">🪙</span>
-                <span className="mario-stat-value">{coins.toString().padStart(8, "0")}</span>
-              </div>
-              <div className="mario-stat">
-                <span className="mario-stat-label">TIME</span>
-                <div className="mario-stat-value">373</div>
-              </div>
               <button onClick={() => setIsMuted(!isMuted)} className="mario-button-small">
                 {isMuted ? "🔇" : "🔊"}
               </button>
@@ -477,13 +458,7 @@ export default function MarioBoardroom() {
 
       </main>
 
-      {/* Ground/Footer */}
-      <footer className="relative z-10 mario-ground">
-        <div className="mario-ground-pattern"></div>
-        <div className="container mx-auto px-4 py-4 text-center">
-          <p className="mario-footer-text">🍄 POWERED BY ELEVENLABS AI</p>
-        </div>
-      </footer>
+
     </div>
   )
 }
