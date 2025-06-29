@@ -61,3 +61,4 @@ yarn-error.log*
 .git
 
 __pycache__/
+__init__.py

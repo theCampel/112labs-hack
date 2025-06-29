@@ -70,42 +70,49 @@ export default function MarioBoardroom() {
   } | null>(null)
 
   // Speaker management functions
-  const addActiveSpeaker = (speakerId: string) => {
+  const addActiveSpeaker = useCallback((speakerId: string) => {
     setActiveSpeakers(prev => new Set([...prev, speakerId]))
     
     // Clear existing timeout for this speaker
-    const existingTimeout = speakerTimeouts.get(speakerId)
-    if (existingTimeout) {
-      clearTimeout(existingTimeout)
-    }
-  }
+    setSpeakerTimeouts(prev => {
+      const existingTimeout = prev.get(speakerId)
+      if (existingTimeout) {
+        clearTimeout(existingTimeout)
+      }
+      return prev
+    })
+  }, [])
 
-  const removeActiveSpeakerWithDelay = (speakerId: string) => {
-    // Clear any existing timeout
-    const existingTimeout = speakerTimeouts.get(speakerId)
-    if (existingTimeout) {
-      clearTimeout(existingTimeout)
-    }
+  const removeActiveSpeakerWithDelay = useCallback((speakerId: string) => {
+    setSpeakerTimeouts(prev => {
+      // Clear any existing timeout
+      const existingTimeout = prev.get(speakerId)
+      if (existingTimeout) {
+        clearTimeout(existingTimeout)
+      }
 
-    // Set new timeout to remove speaker after 2 seconds
-    const timeout = setTimeout(() => {
-      setActiveSpeakers(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(speakerId)
-        return newSet
-      })
-      setSpeakerTimeouts(prev => {
-        const newMap = new Map(prev)
-        newMap.delete(speakerId)
-        return newMap
-      })
-    }, 2000)
+      // Set new timeout to remove speaker after 2 seconds
+      const timeout = setTimeout(() => {
+        setActiveSpeakers(prevSpeakers => {
+          const newSet = new Set(prevSpeakers)
+          newSet.delete(speakerId)
+          return newSet
+        })
+        setSpeakerTimeouts(prevTimeouts => {
+          const newMap = new Map(prevTimeouts)
+          newMap.delete(speakerId)
+          return newMap
+        })
+      }, 2000)
 
-    setSpeakerTimeouts(prev => new Map([...prev, [speakerId, timeout]]))
-  }
+      const newMap = new Map(prev)
+      newMap.set(speakerId, timeout)
+      return newMap
+    })
+  }, [])
 
-  // Voice activity detection for Mario (visual indicators only)
-  const detectMarioVoiceActivity = async () => {
+  // Voice activity detection for Mario (visual indicators only)  
+  const detectMarioVoiceActivity = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const audioContext = new AudioContext()
@@ -117,6 +124,7 @@ export default function MarioBoardroom() {
       const dataArray = new Uint8Array(bufferLength)
       
       microphone.connect(analyser)
+      let animationId: number
 
       const checkAudioLevel = () => {
         analyser.getByteFrequencyData(dataArray)
@@ -136,21 +144,41 @@ export default function MarioBoardroom() {
           }
         }
         
-        requestAnimationFrame(checkAudioLevel)
+        animationId = requestAnimationFrame(checkAudioLevel)
       }
       
       checkAudioLevel()
+      
+      // Return cleanup function
+      return () => {
+        if (animationId) {
+          cancelAnimationFrame(animationId)
+        }
+        stream.getTracks().forEach(track => track.stop())
+        audioContext.close()
+      }
     } catch (error) {
       console.error('Error accessing microphone:', error)
+      return () => {} // Return empty cleanup function
     }
-  }
+  }, [isMuted, marioIsSpeaking, addActiveSpeaker, removeActiveSpeakerWithDelay])
 
   // Initialize voice detection when connected
   useEffect(() => {
+    let cleanup: (() => void) | undefined
+    
     if (isConnected) {
-      detectMarioVoiceActivity()
+      detectMarioVoiceActivity().then(cleanupFn => {
+        cleanup = cleanupFn
+      })
     }
-  }, [isConnected])
+    
+    return () => {
+      if (cleanup) {
+        cleanup()
+      }
+    }
+  }, [isConnected, detectMarioVoiceActivity])
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -185,6 +213,46 @@ export default function MarioBoardroom() {
       console.error("Character action failed:", error)
     }
   }
+
+  // Memoized callbacks for ElevenLabsConversation
+  const handleConnect = useCallback(() => {
+    setIsConnected(true)
+    setCoins((prev) => prev + 200)
+  }, [])
+
+  const handleDisconnect = useCallback(() => {
+    setIsConnected(false)
+  }, [])
+
+  const handleMessage = useCallback((message: any) => {
+    const rawSpeaker = message.source?.voice_id || message.speaker
+    console.log('🎯 Detected raw speaker:', rawSpeaker)
+    console.log('🎯 Detected message:', message.message)
+    const speaker = getCharacterFromRawMessage(message.message)
+    setCurrentSpeaker(speaker)
+    console.log('🎯 Detected speaker:', speaker, 'from voice_id:', rawSpeaker)
+    
+    // Use new speaker management system
+    if (speaker) {
+      addActiveSpeaker(speaker)
+      
+      // Also set a timeout to remove the speaker after 3 seconds
+      // This handles cases where we don't get explicit "end" events
+      setTimeout(() => {
+        removeActiveSpeakerWithDelay(speaker)
+      }, 3000)
+    }
+    
+    if (message.message && speaker) {
+      const characterName = characters.find(c => c.id === speaker)?.name || speaker
+      setTranscript((prev) => [...prev, `${characterName}: ${message.message}`])
+      setCoins((prev) => prev + 50)
+    }
+  }, [addActiveSpeaker, removeActiveSpeakerWithDelay])
+
+  const handleError = useCallback((error: any) => {
+    console.error("ElevenLabs error:", error)
+  }, [])
 
   return (
     <div className="min-h-screen mario-world-bg relative overflow-hidden">
@@ -399,42 +467,10 @@ export default function MarioBoardroom() {
             hideUI={true}
             isMuted={isMuted}
             onMethodsReady={handleMethodsReady}
-            onConnect={() => {
-              setIsConnected(true)
-              setCoins((prev) => prev + 200)
-            }}
-            onDisconnect={() => setIsConnected(false)}
-            onMessage={(message) => {
-              const rawSpeaker = message.source?.voice_id || message.speaker
-              console.log('🎯 Detected raw speaker:', rawSpeaker)
-              console.log('🎯 Detected message:', message.message)
-              const speaker = getCharacterFromRawMessage(message.message)
-              setCurrentSpeaker(speaker)
-              console.log('🎯 Detected speaker:', speaker, 'from voice_id:', rawSpeaker)
-              
-              // Use new speaker management system
-              if (speaker) {
-                addActiveSpeaker(speaker)
-                
-                // Also set a timeout to remove the speaker after 3 seconds
-                // This handles cases where we don't get explicit "end" events
-                setTimeout(() => {
-                  removeActiveSpeakerWithDelay(speaker)
-                }, 3000)
-              }
-              
-              if (message.message && speaker) {
-                const characterName = characters.find(c => c.id === speaker)?.name || speaker
-                setTranscript((prev) => [...prev, `${characterName}: ${message.message}`])
-                setCoins((prev) => prev + 50)
-              }
-              
-              // The speaker timeout will be handled by a separate mechanism
-              // when the agent stops speaking
-            }}
-            onError={(error) => {
-              console.error("ElevenLabs error:", error)
-            }}
+            onConnect={handleConnect}
+            onDisconnect={handleDisconnect}
+            onMessage={handleMessage}
+            onError={handleError}
           />
         </div>
 

@@ -12,10 +12,20 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from agents.social.slack_post import post_to_slack_from_simple_prompt
 from agents.social.bluesky_transcript_post import post_to_bluesky_from_simple_prompt
-from agents.web_editor.improve_website import improve_website_html, read_html_file
+from agents.web_editor.improve_website import improve_website_html, read_html_file, save_html_overwrite
 
 app = Flask(__name__)
 WEBSITE_HTML_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'agents', 'web_editor', 'peach_status.html'))
+
+def improve_and_save_website(feedback, html_file_path):
+    """Improve the website HTML and save it to the file."""
+    try:
+        html_content = read_html_file(html_file_path)
+        improved_html = improve_website_html(feedback, html_content)
+        save_html_overwrite(html_file_path, improved_html)
+        logging.info(f"Successfully improved and saved website with feedback: {feedback}")
+    except Exception as e:
+        logging.error(f"Error improving website: {e}")
 
 @app.route("/isAlive", methods=["GET"])
 def isAlive():
@@ -60,10 +70,10 @@ def update_website():
     if not data:
         return jsonify({"success": False, "message": "Missing request body."}), 400
     
-    # Run the Gemini API call in a background thread to avoid blocking
+    # Run the website improvement and save in a background thread to avoid blocking
     thread = threading.Thread(
-        target=improve_website_html,
-        args=(data["description"], read_html_file(WEBSITE_HTML_FILE))
+        target=improve_and_save_website,
+        args=(data["message"], WEBSITE_HTML_FILE)
     )
     thread.start()
 

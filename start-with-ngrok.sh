@@ -51,7 +51,7 @@ echo ""
 
 # Start Flask API in background
 cd "flask-backend/services"
-source .venv/bin/activate
+source ../../venv/bin/activate
 python app.py &
 FLASK_PID=$!
 cd ../..

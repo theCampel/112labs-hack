@@ -1,7 +1,7 @@
 "use client"
 
 import { useConversation } from '@elevenlabs/react'
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 
 // This is a placeholder for the actual ElevenLabs integration
 // Replace this with the correct ElevenLabs React SDK import once available
@@ -34,6 +34,7 @@ export function ElevenLabsConversation({
   onMethodsReady,
 }: ElevenLabsConversationProps) {
   const [isStarting, setIsStarting] = useState(false)
+  const conversationRef = useRef<any>(null)
   
   const conversation = useConversation({
     micMuted: isMuted,
@@ -55,6 +56,11 @@ export function ElevenLabsConversation({
     },
   })
 
+  // Store conversation in ref for stable access
+  useEffect(() => {
+    conversationRef.current = conversation
+  }, [conversation])
+
   // Function to get signed URL for private agents
   const getSignedUrl = async (): Promise<string> => {
     const response = await fetch("/api/get-signed-url")
@@ -65,6 +71,7 @@ export function ElevenLabsConversation({
     return signedUrl
   }
 
+  // Create stable wrapper functions that use the ref
   const startConversation = useCallback(async () => {
     try {
       setIsStarting(true)
@@ -78,12 +85,12 @@ export function ElevenLabsConversation({
       if (useSignedUrl) {
         // For private agents, get signed URL
         const signedUrl = await getSignedUrl()
-        await conversation.startSession({
+        await conversationRef.current?.startSession({
           signedUrl,
         })
       } else {
         // For public agents, use agent ID directly
-        await conversation.startSession({
+        await conversationRef.current?.startSession({
           agentId,
         })
       }
@@ -93,19 +100,19 @@ export function ElevenLabsConversation({
     } finally {
       setIsStarting(false)
     }
-  }, [conversation, agentId, onError])
+  }, [agentId, onError])
 
   const stopConversation = useCallback(async () => {
-    await conversation.endSession()
-  }, [conversation])
+    await conversationRef.current?.endSession()
+  }, [])
 
-  // Expose methods to parent component
+  // Expose methods to parent component - only call once since methods are now stable
   useEffect(() => {
     onMethodsReady?.({
       startConversation,
       stopConversation,
     })
-  }, [startConversation, stopConversation, onMethodsReady])
+  }, []) // Empty dependency array since methods are now stable
 
   if (hideUI) {
     return null

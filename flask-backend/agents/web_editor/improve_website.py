@@ -28,13 +28,15 @@ def read_html_file(path):
 
 def improve_website_html(feedback, html_content):
     """Calls Gemini API to get an improved version of the HTML."""
-    
+    # print(f"\n\nImproving website HTML with feedback: {feedback}\n\n")
     prompt = load_and_format_prompt("improve_website_html", feedback=feedback, html_content=html_content)
     
+    # print(f"\n\nPrompt: {prompt}\n\n")
     response = client.models.generate_content(
         model="gemini-2.5-flash", 
         contents=prompt
     )
+    # print(f"\n\nResponse: {response.text.strip()}\n\n")
     return response.text.strip()
 
 def save_html_overwrite(path, content):
