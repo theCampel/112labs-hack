@@ -3,6 +3,8 @@ import os
 import threading
 from flask import Flask, request, Response, jsonify
 import json
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Add the parent directory (flask-backend) to the Python path
 # This allows us to import from the 'agents' and 'utils' directories
@@ -22,6 +24,10 @@ def isAlive():
 
 @app.route("/send-slack-message-from-simple-prompt", methods=["POST"])
 def send_slack_message():
+    print(f"\n--- LOGGING /send-slack-message-from-simple-prompt ---")
+    print(f"Headers:\n{request.headers}")
+    print(f"Raw Body: {request.get_data(as_text=True)}")
+    print("--------------------------------\n")
     data = request.get_json()
     if not data or "message" not in data:
         return jsonify({"success": False, "message": "Missing 'message' in request body."}), 400
@@ -31,7 +37,13 @@ def send_slack_message():
 
 @app.route("/send-bluesky-message-from-simple-prompt", methods=["POST"])
 def send_bluesky_message():
+    print(f"\n--- LOGGING /send-bluesky-message-from-simple-prompt ---")
+    print(f"Headers:\n{request.headers}")
+    print(f"Raw Body: {request.get_data(as_text=True)}")
+    print("--------------------------------\n")
+    logging.info(f"Received request for /send-bluesky-message-from-simple-prompt: {request}")
     data = request.get_json()
+    
     if not data or "message" not in data:
         return jsonify({"success": False, "message": "Missing 'message' in request body."}), 400
     message = data["message"]
@@ -40,6 +52,10 @@ def send_bluesky_message():
 
 @app.route("/update-website", methods=["POST"])
 def update_website():
+    print(f"\n--- LOGGING /update-website ---")
+    print(f"Headers:\n{request.headers}")
+    print(f"Raw Body: {request.get_data(as_text=True)}")
+    print("--------------------------------\n")
     data = request.get_json()
     if not data:
         return jsonify({"success": False, "message": "Missing request body."}), 400
